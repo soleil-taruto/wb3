@@ -116,7 +116,7 @@ namespace Charlotte
 				}
 			}
 
-			channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>HELLO HAPPY WORLD</h1>") };
+			channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>SORRY, UNDER MAINTENANCE NOW.</h1>") };
 		}
 	}
 }
