@@ -74,90 +74,47 @@ namespace Charlotte
 			return Math.Sqrt(pt.X * pt.X + pt.Y * pt.Y);
 		}
 
-		public static S_MaskGZDataEng MaskGZDataEng = new S_MaskGZDataEng();
-
-		/// <summary>
-		/// サーバー・クライアントで同期する必要アリ
-		/// </summary>
-		public class S_MaskGZDataEng
+		public static class WonderHex
 		{
-			private int GetSize(int size)
+			private const string WONDER_DIGITS = "abcdef9876543210";
+
+			public static string ToString(byte[] src)
 			{
-				return Math.Min(300, size / 2);
-			}
+				StringBuilder buff = new StringBuilder(src.Length * 2);
 
-			private uint X;
-
-			private void AvoidXIsZero()
-			{
-				this.X = this.X % 0xffffffffu + 1u;
-			}
-
-			private uint Rand()
-			{
-				// Xorshift-32
-
-				this.X ^= this.X << 13;
-				this.X ^= this.X >> 17;
-				this.X ^= this.X << 5;
-
-				return this.X;
-			}
-
-			private void Shuffle(int[] values)
-			{
-				for (int index = values.Length; 2 <= index; index--)
+				foreach (byte chr in src)
 				{
-					int a = index - 1;
-					int b = (int)(this.Rand() % (uint)index);
-
-					int tmp = values[a];
-					values[a] = values[b];
-					values[b] = tmp;
+					buff.Append(WONDER_DIGITS[chr >> 4]);
+					buff.Append(WONDER_DIGITS[chr & 0x0f]);
 				}
+				return buff.ToString();
 			}
 
-			private void Mask(byte[] data)
+			public static byte[] ToBytes(string src)
 			{
-				int size = this.GetSize(data.Length);
+				if (src.Length % 2 != 0)
+					throw new ArgumentException("入力文字列の長さに問題があります。");
 
-				for (int index = 0; index < size; index += 13)
+				byte[] dest = new byte[src.Length / 2];
+
+				for (int index = 0; index < dest.Length; index++)
 				{
-					data[index] ^= (byte)0xf5;
+					int hi = To4Bit(src[index * 2 + 0]);
+					int lw = To4Bit(src[index * 2 + 1]);
+
+					dest[index] = (byte)((hi << 4) | lw);
 				}
+				return dest;
 			}
 
-			private void Swap(byte[] data, int[] swapIdxLst)
+			private static int To4Bit(char chr)
 			{
-				for (int index = 0; index < swapIdxLst.Length; index++)
-				{
-					int a = index;
-					int b = data.Length - swapIdxLst[index];
+				int ret = WONDER_DIGITS.IndexOf(char.ToLower(chr));
 
-					byte tmp = data[a];
-					data[a] = data[b];
-					data[b] = tmp;
-				}
-			}
+				if (ret == -1)
+					throw new ArgumentException("入力文字列に含まれる文字に問題があります。");
 
-			private void Transpose(byte[] data, string seed)
-			{
-				int[] swapIdxLst = Enumerable.Range(1, this.GetSize(data.Length)).ToArray();
-
-				this.X = (uint)data.Length;
-				this.Rand();
-				this.X ^= uint.Parse(seed);
-				this.AvoidXIsZero();
-				this.Shuffle(swapIdxLst);
-
-				this.Mask(data);
-				this.Swap(data, swapIdxLst);
-				this.Mask(data);
-			}
-
-			public void Transpose(byte[] data)
-			{
-				this.Transpose(data, "2021103101");
+				return ret;
 			}
 		}
 	}

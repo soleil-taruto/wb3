@@ -82,7 +82,8 @@ namespace Charlotte
 		private void Connected(HTTPServerChannel channel)
 		{
 			string sData = null;
-			string sCommand = null;
+			string sStartPos = null;
+			string sEndPos = null;
 
 			foreach (string[] pair in channel.HeaderPairs)
 			{
@@ -90,29 +91,30 @@ namespace Charlotte
 				{
 					sData = pair[1];
 				}
-				else if (SCommon.EqualsIgnoreCase(pair[0], "X-Tea"))
+				else if (SCommon.EqualsIgnoreCase(pair[0], "X-StartPos"))
 				{
-					sCommand = pair[1];
+					sStartPos = pair[1];
+				}
+				else if (SCommon.EqualsIgnoreCase(pair[0], "X-EndPos"))
+				{
+					sEndPos = pair[1];
 				}
 			}
 
-			if (sData != null && sCommand != null)
+			if (sData != null && sStartPos != null && sEndPos != null)
 			{
-				byte[] data = SCommon.Hex.ToBytes(sData);
-				int command = int.Parse(sCommand);
+				byte[] data = Common.WonderHex.ToBytes(sData);
+				long startPos = long.Parse(sStartPos);
+				long endPos = long.Parse(sStartPos);
 
-				Common.MaskGZDataEng.Transpose(data);
-
-				if (command == 1)
+				if (startPos == 0L)
 				{
 					this.CurrOutputFile = Common.NextOutputPath() + "_" + SCommon.SimpleDateTime.Now().ToTimeStamp() + ".dat";
 				}
-				else if (command == 2)
+
+				using (FileStream writer = new FileStream(this.CurrOutputFile, FileMode.Append, FileAccess.Write))
 				{
-					using (FileStream writer = new FileStream(this.CurrOutputFile, FileMode.Append, FileAccess.Write))
-					{
-						writer.Write(data, 0, data.Length);
-					}
+					writer.Write(data, 0, data.Length);
 				}
 			}
 

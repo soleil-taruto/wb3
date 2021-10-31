@@ -68,8 +68,7 @@ namespace Charlotte
 
 			Url = ar.NextArg();
 			string file = ar.NextArg();
-
-			Send(Encoding.ASCII.GetBytes("Dummy"), 1);
+			long offset = 0L;
 
 			using (FileStream reader = new FileStream(file, FileMode.Open, FileAccess.Read))
 			{
@@ -83,23 +82,23 @@ namespace Charlotte
 					ProcMain.WriteLog("Position: " + reader.Position);
 
 					byte[] data = SCommon.GetSubBytes(buff, 0, readSize);
-					Common.MaskGZDataEng.Transpose(data);
-					Send(data, 2);
+					Send(data, offset);
+					offset += (long)readSize;
 				}
 			}
 
 			ProcMain.WriteLog("OK!");
 		}
 
-		private void Send(byte[] data, int command)
+		private void Send(byte[] data, long offset)
 		{
 			for (int tryCount = 1; ; tryCount++)
 			{
-				ProcMain.WriteLog("TRY-COUNT = " + tryCount);
+				ProcMain.WriteLog("TRY-COUNT = " + tryCount + ", " + offset);
 
 				try
 				{
-					TrySend(data, command);
+					TrySend(data, offset);
 					return;
 				}
 				catch (Exception e)
@@ -111,7 +110,7 @@ namespace Charlotte
 			}
 		}
 
-		private void TrySend(byte[] data, int command)
+		private void TrySend(byte[] data, long offset)
 		{
 			using (WorkingDir wd = new WorkingDir())
 			{
@@ -119,8 +118,9 @@ namespace Charlotte
 
 				HTTPClient hc = new HTTPClient(Url, resFile);
 
-				hc.AddHeader("X-Cookie", SCommon.Hex.ToString(data));
-				hc.AddHeader("X-Tea", command.ToString());
+				hc.AddHeader("X-Cookie", Common.WonderHex.ToString(data));
+				hc.AddHeader("X-StartPos", offset.ToString());
+				hc.AddHeader("X-EndPos", (offset + (long)data.Length).ToString());
 
 				hc.Get();
 
