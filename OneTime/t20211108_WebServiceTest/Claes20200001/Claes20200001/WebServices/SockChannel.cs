@@ -63,6 +63,27 @@ namespace Charlotte.WebServices
 			}
 		}
 
+		public IEnumerable<int> RecvLine(Action<byte[]> a_return)
+		{
+			const int LINE_LEN_MAX = 612000;
+
+			byte[] buff = new byte[LINE_LEN_MAX];
+			int offset;
+
+			for (offset = 0; ; offset++)
+			{
+				foreach (int relay in this.TryRecv(buff, offset, 1, ret => { }))
+					yield return relay;
+
+				if (buff[offset] == HTTPServerChannel.CR)
+					break;
+
+				if (buff[offset] == HTTPServerChannel.LF)
+					offset--;
+			}
+			a_return(buff.Take(offset).ToArray());
+		}
+
 		public IEnumerable<int> Recv(int size, Action<byte[]> a_return)
 		{
 			byte[] data = new byte[size];

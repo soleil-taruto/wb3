@@ -127,60 +127,21 @@ namespace Charlotte.WebServices
 		public List<string[]> HeaderPairs = new List<string[]>();
 		public byte[] Body;
 
-		private const byte CR = 0x0d;
-		private const byte LF = 0x0a;
+		public const byte CR = 0x0d;
+		public const byte LF = 0x0a;
 
-		private readonly byte[] CRLF = new byte[] { CR, LF };
-
-		private const int LINE_LEN_MAX = 512000;
-
-		private static void RL_AddChar(List<byte> buff, byte chr)
-		{
-			if (LINE_LEN_MAX < buff.Count)
-				throw new OverflowException("Received line is too long");
-
-			if (chr < 0x20 || 0x7e < chr) // ? not ASCII -> ignore
-				return;
-
-			buff.Add(chr);
-		}
+		public readonly byte[] CRLF = new byte[] { CR, LF };
 
 		private IEnumerable<int> RecvLine(Action<string> a_return)
 		{
-			List<byte> buff = new List<byte>(LINE_LEN_MAX);
+			byte[] buff = null;
 
-			for (; ; )
-			{
-				byte[] chrs = null;
+			foreach (int relay in this.Channel.RecvLine(ret => buff = ret))
+				yield return relay;
 
-				foreach (int relay in this.Channel.Recv(2, ret => chrs = ret))
-					yield return relay;
+			if (buff == null)
+				throw null; // never
 
-				if (chrs[0] == LF)
-					throw new Exception("CR-LF error 01");
-
-				if (chrs[0] == CR)
-				{
-					if (chrs[1] != LF)
-						throw new Exception("CR-LF error 02");
-
-					break;
-				}
-				if (chrs[1] == CR)
-				{
-					RL_AddChar(buff, chrs[0]);
-
-					foreach (int relay in this.Channel.Recv(1, ret => chrs = ret))
-						yield return relay;
-
-					if (chrs[0] != LF)
-						throw new Exception("CR-LF error 03");
-
-					break;
-				}
-				RL_AddChar(buff, chrs[0]);
-				RL_AddChar(buff, chrs[1]);
-			}
 			a_return(Encoding.ASCII.GetString(buff.ToArray()));
 		}
 
