@@ -65,7 +65,7 @@ namespace Charlotte.WebServices
 
 		public IEnumerable<int> RecvLine(Action<byte[]> a_return)
 		{
-			const int LINE_LEN_MAX = 612000;
+			const int LINE_LEN_MAX = 512000;
 
 			byte[] buff = new byte[LINE_LEN_MAX];
 			int offset;
@@ -78,7 +78,7 @@ namespace Charlotte.WebServices
 				if (buff[offset] == HTTPServerChannel.CR)
 					break;
 
-				if (buff[offset] == HTTPServerChannel.LF)
+				if (buff[offset] < 0x20 || 0x7e < buff[offset]) // ? not ASCII -> ignore
 					offset--;
 			}
 			a_return(buff.Take(offset).ToArray());
