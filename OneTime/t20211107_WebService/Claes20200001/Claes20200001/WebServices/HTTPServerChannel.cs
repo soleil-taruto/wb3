@@ -132,34 +132,54 @@ namespace Charlotte.WebServices
 
 		private readonly byte[] CRLF = new byte[] { CR, LF };
 
+		private const int LINE_LEN_MAX = 512000;
+
+		private static void RL_AddChar(List<byte> buff, byte chr)
+		{
+			if (LINE_LEN_MAX < buff.Count)
+				throw new OverflowException("Received line is too long");
+
+			if (chr < 0x20 || 0x7e < chr) // ? not ASCII -> ignore
+				return;
+
+			buff.Add(chr);
+		}
+
 		private IEnumerable<int> RecvLine(Action<string> a_return)
 		{
-			const int LINE_LEN_MAX = 512000;
-
 			List<byte> buff = new List<byte>(LINE_LEN_MAX);
 
 			for (; ; )
 			{
 				byte[] chrs = null;
 
-				foreach (int relay in this.Channel.Recv(1, ret => chrs = ret))
+				foreach (int relay in this.Channel.Recv(2, ret => chrs = ret))
 					yield return relay;
 
-				byte chr = chrs[0];
+				if (chrs[0] == LF)
+					throw new Exception("CR-LF error 01");
 
-				if (chr == CR)
-					continue;
+				if (chrs[0] == CR)
+				{
+					if (chrs[1] != LF)
+						throw new Exception("CR-LF error 02");
 
-				if (chr == LF)
 					break;
+				}
+				if (chrs[1] == CR)
+				{
+					RL_AddChar(buff, chrs[0]);
 
-				if (LINE_LEN_MAX < buff.Count)
-					throw new OverflowException("Received line is too long");
+					foreach (int relay in this.Channel.Recv(1, ret => chrs = ret))
+						yield return relay;
 
-				if (chr < 0x20 || 0x7e < chr) // ? not ASCII -> SPACE
-					chr = 0x20;
+					if (chrs[0] != LF)
+						throw new Exception("CR-LF error 03");
 
-				buff.Add(chr);
+					break;
+				}
+				RL_AddChar(buff, chrs[0]);
+				RL_AddChar(buff, chrs[1]);
 			}
 			a_return(Encoding.ASCII.GetString(buff.ToArray()));
 		}
