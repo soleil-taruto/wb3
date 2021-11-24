@@ -38,7 +38,7 @@ namespace Charlotte
 		{
 			// -- choose one --
 
-			Main4(new ArgsReader(new string[] { }));
+			Main4(new ArgsReader(new string[] { "80" }));
 			//new Test0001().Test01();
 			//new Test0002().Test01();
 			//new Test0003().Test01();
@@ -58,6 +58,9 @@ namespace Charlotte
 			{
 				ProcMain.WriteLog(e);
 			}
+
+			// 終了時のコンソール出力が見えるように、少し待つ。
+			Thread.Sleep(500);
 		}
 
 		private void Main5(ArgsReader ar)
@@ -85,14 +88,23 @@ namespace Charlotte
 
 				// サーバーの設定ここまで
 
+				ProcMain.WriteLog("HP80-ST");
+
 				if (ar.ArgIs("/S"))
 				{
 					evStop.Set();
 				}
 				else
 				{
+					int portNo = SCommon.ToRange(int.Parse(ar.NextArg()), 1, 65535);
+
+					ProcMain.WriteLog("ポート番号：" + portNo);
+
+					hs.PortNo = portNo;
 					hs.Perform();
 				}
+
+				ProcMain.WriteLog("HP80-ED");
 			}
 		}
 
@@ -168,11 +180,15 @@ namespace Charlotte
 					channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.HTT_PortNo + urlPath });
 			}
 			else
+			{
 				channel.ResStatus = 404;
+				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
+				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>HP80</h1>") };
+			}
 
-			channel.ResHeaderPairs.Add(new string[] { "Server", "HTT" });
+			channel.ResHeaderPairs.Add(new string[] { "Server", "HP80" });
 
-			// TODO ???
+			// ----
 
 			SockCommon.WriteLog(SockCommon.ErrorLevel_e.INFO, "RES-STATUS " + channel.ResStatus);
 

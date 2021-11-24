@@ -54,7 +54,7 @@ namespace Charlotte.WebServices
 
 		public static T NB<T>(string title, Func<T> routine)
 		{
-#if !true
+#if true
 			return routine();
 #else
 			DateTime startedTime = DateTime.Now;
