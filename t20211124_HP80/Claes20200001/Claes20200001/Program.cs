@@ -189,9 +189,18 @@ namespace Charlotte
 			}
 			else if (Consts.HP80_HostNames.Contains(hostName))
 			{
-				channel.ResStatus = 404;
-				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
-				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>HP80 @ " + DateTime.Now + "</h1>") };
+				if (urlPath == "/")
+				{
+					channel.ResStatus = 200;
+					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
+					channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1 style='color: navy;'>Now = " + DateTime.Now + "</h1>") };
+				}
+				else
+				{
+					channel.ResStatus = 404;
+					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
+					channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1 style='color: maroon;'>404</h1>") };
+				}
 			}
 			else if (urlPath == "/")
 			{
