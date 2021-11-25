@@ -10,12 +10,11 @@ namespace Charlotte
 	{
 		public const string SERVER_STOP_EVENT_NAME = ProcMain.APP_IDENT + "_SERVER_STOP_EVENT";
 
-		public static string[] HTT_HostNames = new string[]
+		public static readonly string[] HP80_HostNames = new string[]
 		{
-			"barnatsutobi.ccsp.mydns.jp",
-			"ornithopter.ccsp.mydns.jp",
-			"stackprobe.ccsp.mydns.jp",
-			"cerulean.ccsp.mydns.jp",
+			"127.0.0.1", // テスト用
+			"localhost", // テスト用
+			"ccsp.mydns.jp",
 		};
 
 		public const int GeTunnelPortNo = 8080;

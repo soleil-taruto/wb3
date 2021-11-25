@@ -38,7 +38,7 @@ namespace Charlotte
 		{
 			// -- choose one --
 
-			Main4(new ArgsReader(new string[] { "80" }));
+			Main4(new ArgsReader(new string[] { "80", @"..\..\..\..\dat\favicon.ico" }));
 			//new Test0001().Test01();
 			//new Test0002().Test01();
 			//new Test0003().Test01();
@@ -96,17 +96,34 @@ namespace Charlotte
 				}
 				else
 				{
-					int portNo = SCommon.ToRange(int.Parse(ar.NextArg()), 1, 65535);
+					hs.PortNo = int.Parse(ar.NextArg());
+					this.FaviconFile = ar.NextArg();
 
-					ProcMain.WriteLog("ポート番号：" + portNo);
+					ProcMain.WriteLog("PortNo: " + hs.PortNo);
+					ProcMain.WriteLog("FaviconFile: " + this.FaviconFile);
 
-					hs.PortNo = portNo;
+					if (hs.PortNo < 1 || 65535 < hs.PortNo)
+						throw new Exception("Bad PortNo");
+
+					if (string.IsNullOrEmpty(this.FaviconFile))
+						throw new Exception("Bad FaviconFile");
+
+					if (!File.Exists(this.FaviconFile))
+						throw new Exception("no FaviconFile");
+
+					this.FaviconData = File.ReadAllBytes(this.FaviconFile);
+
+					ProcMain.WriteLog("FaviconData-Size: " + this.FaviconData.Length);
+
 					hs.Perform();
 				}
 
 				ProcMain.WriteLog("HP80-ED");
 			}
 		}
+
+		private string FaviconFile;
+		private byte[] FaviconData;
 
 		private void P_Connected(HTTPServerChannel channel)
 		{
@@ -122,12 +139,6 @@ namespace Charlotte
 				case "GET":
 					this.HTTP_Get(channel);
 					break;
-
-#if false
-				case "POST":
-					this.HTTP_Post(channel);
-					break;
-#endif
 
 				default:
 					throw new Exception("Bad method");
@@ -170,20 +181,27 @@ namespace Charlotte
 					hostName = host.Substring(0, colon);
 			}
 
-			if (Consts.HTT_HostNames.Contains(hostName))
+			if (urlPath == "/favicon.ico")
 			{
-				channel.ResStatus = 301;
-
-				if (urlPath == "/")
-					channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.GeTunnelPortNo + "/" });
-				else
-					channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.HTT_PortNo + urlPath });
+				channel.ResStatus = 200;
+				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "image/x-icon" });
+				channel.ResBody = new byte[][] { this.FaviconData };
 			}
-			else
+			else if (Consts.HP80_HostNames.Contains(hostName))
 			{
 				channel.ResStatus = 404;
 				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
-				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>HP80</h1>") };
+				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1>HP80 @ " + DateTime.Now + "</h1>") };
+			}
+			else if (urlPath == "/")
+			{
+				channel.ResStatus = 301;
+				channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.GeTunnelPortNo + "/" });
+			}
+			else
+			{
+				channel.ResStatus = 301;
+				channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.HTT_PortNo + urlPath });
 			}
 
 			channel.ResHeaderPairs.Add(new string[] { "Server", "HP80" });
