@@ -12,6 +12,7 @@ namespace Charlotte
 
 		public static string[] HTT_HostNames = new string[]
 		{
+			"barnatsutobi.ccsp.mydns.jp",
 			"ornithopter.ccsp.mydns.jp",
 			"stackprobe.ccsp.mydns.jp",
 			"cerulean.ccsp.mydns.jp",
