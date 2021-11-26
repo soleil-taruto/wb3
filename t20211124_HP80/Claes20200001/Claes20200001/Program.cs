@@ -190,17 +190,12 @@ namespace Charlotte
 			else if (Consts.HP80_HostNames.Contains(hostName))
 			{
 				if (urlPath == "/")
-				{
 					channel.ResStatus = 200;
-					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
-					channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1 style='color: navy;'>Now = " + DateTime.Now + "</h1>") };
-				}
 				else
-				{
 					channel.ResStatus = 404;
-					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
-					channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes("<h1 style='color: maroon;'>404</h1>") };
-				}
+
+				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
+				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes(this.GetHP80Page(channel)) };
 			}
 			else if (urlPath == "/")
 			{
@@ -232,6 +227,19 @@ namespace Charlotte
 					return pair[1];
 
 			return null;
+		}
+
+		private string GetHP80Page(HTTPServerChannel channel)
+		{
+			return string.Join("", new string[]
+			{
+				channel.ResStatus.ToString(),
+				DateTime.Now.ToString(),
+				channel.Channel.Handler.RemoteEndPoint.ToString(),
+				channel.FirstLine,
+			}
+			.Concat(channel.HeaderPairs.Select(v => v[0] + " = " + v[1]))
+			.Select(v => "<div>" + v + "</div>"));
 		}
 	}
 }
