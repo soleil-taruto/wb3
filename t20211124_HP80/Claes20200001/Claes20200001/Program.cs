@@ -38,8 +38,8 @@ namespace Charlotte
 		{
 			// -- choose one --
 
-			Main4(new ArgsReader(new string[] { "80", @"..\..\..\..\dat\favicon.ico" }));
-			//new Test0001().Test01();
+			//Main4(new ArgsReader(new string[] { "80", @"..\..\..\..\dat\favicon.ico", @"C:\temp" }));
+			new Test0001().Test01();
 			//new Test0002().Test01();
 			//new Test0003().Test01();
 
@@ -98,9 +98,11 @@ namespace Charlotte
 				{
 					hs.PortNo = int.Parse(ar.NextArg());
 					this.FaviconFile = ar.NextArg();
+					this.OutputDir = ar.NextArg();
 
 					ProcMain.WriteLog("PortNo: " + hs.PortNo);
 					ProcMain.WriteLog("FaviconFile: " + this.FaviconFile);
+					ProcMain.WriteLog("OutputDir: " + this.OutputDir);
 
 					if (hs.PortNo < 1 || 65535 < hs.PortNo)
 						throw new Exception("Bad PortNo");
@@ -110,6 +112,9 @@ namespace Charlotte
 
 					if (!File.Exists(this.FaviconFile))
 						throw new Exception("no FaviconFile");
+
+					if (!Directory.Exists(this.OutputDir))
+						throw new Exception("no OutputDir");
 
 					this.FaviconData = File.ReadAllBytes(this.FaviconFile);
 
@@ -124,6 +129,7 @@ namespace Charlotte
 
 		private string FaviconFile;
 		private byte[] FaviconData;
+		private string OutputDir;
 
 		private void P_Connected(HTTPServerChannel channel)
 		{
@@ -189,23 +195,24 @@ namespace Charlotte
 			}
 			else if (Consts.HP80_HostNames.Contains(hostName))
 			{
+				CookieReceiver(channel);
+
 				if (urlPath == "/")
 					channel.ResStatus = 200;
 				else
 					channel.ResStatus = 404;
 
-				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html" });
-				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes(this.GetHP80Page(channel)) };
-			}
-			else if (urlPath == "/")
-			{
-				channel.ResStatus = 301;
-				channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.GeTunnelPortNo + "/" });
+				channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/plain" });
+				channel.ResBody = new byte[][] { Encoding.ASCII.GetBytes(channel.Channel.Handler.RemoteEndPoint.ToString().Split(':')[0]) };
 			}
 			else
 			{
 				channel.ResStatus = 301;
-				channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.HTT_PortNo + urlPath });
+
+				if (urlPath == "/")
+					channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.GeTunnelPortNo + "/" });
+				else
+					channel.ResHeaderPairs.Add(new string[] { "Location", "http://" + hostName + ":" + Consts.HTT_PortNo + urlPath });
 			}
 
 			channel.ResHeaderPairs.Add(new string[] { "Server", "HP80" });
@@ -220,6 +227,49 @@ namespace Charlotte
 			SockCommon.WriteLog(SockCommon.ErrorLevel_e.INFO, "RES-BODY " + (channel.ResBody != null));
 		}
 
+		private void CookieReceiver(HTTPServerChannel channel)
+		{
+			string cookie = GetHeaderValue(channel, "cookie");
+
+			if (cookie == null)
+				return;
+
+			string[][] pairs = cookie
+				.Split(';')
+				.Select(v => v.Split(new char[] { '=' }, 2)
+					.Select(w => w.Trim())
+					.Where(w => w != "")
+					.ToArray())
+				.Where(v => v.Length == 2)
+				.ToArray();
+
+			StringBuilder buff = new StringBuilder();
+			bool reading = false;
+
+			foreach (string[] pair in pairs)
+			{
+				if (pair[0] == "blue_steel_01" && pair[1] == "01")
+					reading = true;
+				else if (pair[0] == "blue_steel_02" && pair[1] == "02")
+					reading = false;
+				else if (reading)
+					buff.Append(pair[1]);
+			}
+
+			string str = buff.ToString();
+
+			if (str == "")
+				return;
+
+			str = Common.ZDec(str);
+			byte[] bStr = SCommon.Base64.I.Decode(str);
+			str = SCommon.ToJString(bStr, true, true, true, true);
+
+			channel.ResHeaderPairs.Add(new string[] { "X-Blue-Steel", str.Length.ToString() });
+
+			File.WriteAllText(Path.Combine(this.OutputDir, SCommon.SimpleDateTime.Now().ToTimeStamp() + ".txt"), str, SCommon.ENCODING_SJIS);
+		}
+
 		private static string GetHeaderValue(HTTPServerChannel channel, string name)
 		{
 			foreach (string[] pair in channel.HeaderPairs)
@@ -227,19 +277,6 @@ namespace Charlotte
 					return pair[1];
 
 			return null;
-		}
-
-		private string GetHP80Page(HTTPServerChannel channel)
-		{
-			return string.Join("", new string[]
-			{
-				channel.ResStatus.ToString(),
-				DateTime.Now.ToString(),
-				channel.Channel.Handler.RemoteEndPoint.ToString(),
-				channel.FirstLine,
-			}
-			.Concat(channel.HeaderPairs.Select(v => v[0] + " = " + v[1]))
-			.Select(v => "<div>" + v + "</div>"));
 		}
 	}
 }

@@ -6,7 +6,7 @@
 ----
 起動方法
 
-	HP80.exe ポート番号 FAVICON-ファイル
+	HP80.exe ポート番号 FAVICON-ファイル 出力-DIR
 
 
 ----
