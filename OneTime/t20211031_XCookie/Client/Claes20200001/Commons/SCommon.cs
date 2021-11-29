@@ -1508,6 +1508,9 @@ namespace Charlotte.Commons
 
 			public byte[] Decode(string src)
 			{
+				while (src.Length % 4 != 0)
+					src += CHAR_PADDING;
+
 				int destSize = (src.Length / 4) * 3;
 
 				if (destSize != 0)
