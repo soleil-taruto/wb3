@@ -62,7 +62,7 @@ namespace Charlotte
 					SCommon.StartsWithIgnoreCase(Path.GetFileName(v), INPUT_LOCAL_FILE_PREFIX) &&
 					SCommon.EndsWithIgnoreCase(v, INPUT_LOCAL_FILE_SUFFIX)
 					)
-				.OrderBy(SCommon.Comp)
+				.OrderBy(SCommon.CompIgnoreCase)
 				.ToArray();
 
 			List<byte[]> buff = new List<byte[]>();
