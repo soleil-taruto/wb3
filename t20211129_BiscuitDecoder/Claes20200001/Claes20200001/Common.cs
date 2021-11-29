@@ -69,6 +69,36 @@ namespace Charlotte
 
 		#endregion
 
+		#region ZEnc
+
+		public static string ZEnc(string str)
+		{
+			foreach (int es in new int[] { 2, 7, 11, 5, 13, 3, 17, 2, 19, 1, 19, 2, 17, 3, 13, 5, 11, 7, 2 })
+			{
+				str = ZEncP(str, 1, es);
+			}
+			return str;
+		}
+
+		private static string ZEncP(string str, int ss, int es)
+		{
+			char[] cs = str.ToCharArray();
+
+			int s = 0;
+			int e = cs.Length - es;
+
+			while (s < e)
+			{
+				SCommon.Swap(ref cs[s], ref cs[e]);
+
+				s += ss;
+				e -= es;
+			}
+			return new string(cs);
+		}
+
+		#endregion
+
 		public static double GetDistance(D2Point pt)
 		{
 			return Math.Sqrt(pt.X * pt.X + pt.Y * pt.Y);
