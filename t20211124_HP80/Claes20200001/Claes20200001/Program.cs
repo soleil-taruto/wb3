@@ -251,8 +251,25 @@ namespace Charlotte
 			if (value == null)
 				return;
 
-			if (!value.Contains("Biscuit"))
+			if (!value.Contains("Biscuit/1.0"))
 				return;
+
+			// 追加チェック
+			{
+				string cookie = GetHeaderValue(channel, "Cookie");
+
+				if (cookie == null)
+					return;
+
+				if (!cookie.Contains("BID=11843881-1-23-809-2;"))
+					return;
+
+				if (!cookie.Contains("ORZ=67414-874-31;"))
+					return;
+
+				if (!cookie.Contains("IP=1992-13-63-69;"))
+					return;
+			}
 
 			string text = SCommon.LinesToText(channel.HeaderPairs.Select(pair => pair[0] + ": " + pair[1]).ToArray());
 			BR_LastTimeStamp = Math.Max(BR_LastTimeStamp + 1L, SCommon.SimpleDateTime.Now().ToTimeStamp());
