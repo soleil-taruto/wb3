@@ -89,6 +89,7 @@ namespace Charlotte
 							{
 								string sData = pair[1];
 								sData = Common.ZEnc(sData);
+								sData = PutBase64Padding(sData);
 								byte[] data = SCommon.Base64.I.Decode(sData);
 								buff.Add(data);
 							}
@@ -97,6 +98,11 @@ namespace Charlotte
 				}
 			}
 			File.WriteAllBytes(Common.NextOutputPath() + ".txt", SCommon.Join(buff));
+		}
+
+		private static string PutBase64Padding(string str)
+		{
+			return str + new string[] { "", "===", "==", "=" }[str.Length % 4];
 		}
 	}
 }
