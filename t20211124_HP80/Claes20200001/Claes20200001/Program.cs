@@ -213,7 +213,7 @@ namespace Charlotte
 				{
 					channel.ResStatus = 404;
 					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html; charset=Shift_JIS" });
-					channel.ResBody = new byte[][] { SCommon.ENCODING_SJIS.GetBytes("<center style=\"color: maroon; font-size: 128px; margin-top: calc(50vh - 96px);\">よんまるよん</center>") };
+					channel.ResBody = new byte[][] { SCommon.ENCODING_SJIS.GetBytes("<center style=\"color: maroon; font-size: 128px; margin-top: calc(50vh - 96px);\">肆佰肆</center>") };
 				}
 			}
 			else
@@ -297,10 +297,18 @@ namespace Charlotte
 				DateTime.Now.ToString(),
 				channel.Channel.Handler.RemoteEndPoint.ToString().Split(':')[0] + " <a href=\"ip\">text</a>",
 				channel.Channel.Handler.RemoteEndPoint.ToString().Split(':')[1],
-				channel.FirstLine,
+				EncodeHTML(channel.FirstLine),
 			}
-			.Concat(channel.HeaderPairs.Select(v => v[0] + " = " + v[1]))
+			.Concat(channel.HeaderPairs.Select(v => EncodeHTML(v[0] + " = " + v[1])))
 			.Select(v => "<div>" + v + "</div>"));
+		}
+
+		private static string EncodeHTML(string text)
+		{
+			return text
+				.Replace("&", "&amp;")
+				.Replace("<", "&lt;")
+				.Replace(">", "&gt;");
 		}
 	}
 }
