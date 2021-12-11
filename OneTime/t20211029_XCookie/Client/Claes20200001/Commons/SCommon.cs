@@ -1472,6 +1472,13 @@ namespace Charlotte.Commons
 				this.CharMap['_'] = 63; // Base64 URL Encode の 64 番目の文字
 			}
 
+			/// <summary>
+			/// バイト列をBase64に変換します。
+			/// 出力フォーマット：
+			/// -- Base64 Encode -- 但し改行無し
+			/// </summary>
+			/// <param name="src">バイト列</param>
+			/// <returns>Base64</returns>
 			public string Encode(byte[] src)
 			{
 				char[] dest = new char[((src.Length + 2) / 3) * 4];
@@ -1509,6 +1516,14 @@ namespace Charlotte.Commons
 				return new string(dest);
 			}
 
+			/// <summary>
+			/// Base64を元のバイト列に変換します。
+			/// 対応フォーマット：
+			/// -- Base64 Encode -- 但し改行を含まないこと。パディング無しでも良い。
+			/// -- Base64 URL Encode
+			/// </summary>
+			/// <param name="src">Base64</param>
+			/// <returns>元のバイト列</returns>
 			public byte[] Decode(string src)
 			{
 				while (src.Length % 4 != 0)
