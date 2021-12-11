@@ -1467,6 +1467,9 @@ namespace Charlotte.Commons
 
 				for (int index = 0; index < 64; index++)
 					this.CharMap[this.Chars[index]] = (byte)index;
+
+				this.CharMap['-'] = 62; // Base64 URL Encode の 63 番目の文字
+				this.CharMap['_'] = 63; // Base64 URL Encode の 64 番目の文字
 			}
 
 			public string Encode(byte[] src)
