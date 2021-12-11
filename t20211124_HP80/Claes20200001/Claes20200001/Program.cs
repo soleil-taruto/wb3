@@ -212,8 +212,8 @@ namespace Charlotte
 				else
 				{
 					channel.ResStatus = 404;
-					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html; charset=UTF-8" });
-					channel.ResBody = new byte[][] { Encoding.UTF8.GetBytes("<center style=\"margin-top: calc(50vh - 12px);\">よんまるよん</center>") };
+					channel.ResHeaderPairs.Add(new string[] { "Content-Type", "text/html; charset=Shift_JIS" });
+					channel.ResBody = new byte[][] { SCommon.ENCODING_SJIS.GetBytes("<center style=\"color: maroon; font-size: 128px; margin-top: calc(50vh - 96px);\">よんまるよん</center>") };
 				}
 			}
 			else
