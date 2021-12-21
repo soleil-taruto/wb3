@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.IO;
 using System.IO.Compression;
 using System.Threading;
@@ -207,19 +208,25 @@ namespace Charlotte.Commons
 			private Serializer()
 			{ }
 
-			private const char DELIMITER = ':';
-
 			/// <summary>
 			/// 文字列のリストを連結してシリアライズします。
 			/// シリアライズされた文字列：
 			/// -- 空文字列ではない。
-			/// -- 書式 == ^[+/:=0-9A-Za-z]+$
+			/// -- 書式 == ^[0-9][A-Za-z0-9+/]*[0-9]$
 			/// </summary>
 			/// <param name="plainStrings">任意の文字列のリスト</param>
 			/// <returns>シリアライズされた文字列</returns>
 			public string Join(IList<string> plainStrings)
 			{
-				return DELIMITER + string.Join(string.Empty, plainStrings.Select(plainString => DELIMITER + Encode(plainString)));
+				if (
+					plainStrings == null ||
+					plainStrings.Any(plainString => plainString == null)
+					)
+					throw new ArgumentException();
+
+				return EncodeGzB64(SCommon.Base64.I.Encode(SCommon.Compress(
+					SCommon.SplittableJoin(plainStrings.Select(plainString => Encoding.UTF8.GetBytes(plainString)).ToArray())
+					)).Replace("=", ""));
 			}
 
 			/// <summary>
@@ -229,17 +236,58 @@ namespace Charlotte.Commons
 			/// <returns>元の文字列リスト</returns>
 			public string[] Split(string serializedString)
 			{
-				return serializedString.Split(DELIMITER).Skip(2).Select(encodedString => Decode(encodedString)).ToArray();
+				if (
+					serializedString == null ||
+					!RegexSerializedString.IsMatch(serializedString)
+					)
+					throw new ArgumentException();
+
+				return SCommon.Split(SCommon.Decompress(SCommon.Base64.I.Decode(DecodeGzB64(serializedString))))
+					.Select(decodedBlock => Encoding.UTF8.GetString(decodedBlock))
+					.ToArray();
 			}
 
-			private string Encode(string plainString)
+			private Regex RegexSerializedString = new Regex("^[0-9][A-Za-z0-9+/]*[0-9]$");
+
+			private string EncodeGzB64(string str)
 			{
-				return SCommon.Base64.I.Encode(Encoding.UTF8.GetBytes(plainString));
+				int stAn = 0;
+				int edAn = 0;
+
+				if (str.StartsWith("H4sIA")) // 先頭を圧縮
+				{
+					for (stAn = 1; stAn < 9; stAn++)
+					{
+						int i = 4 + stAn;
+
+						if (str.Length <= i || str[i] != 'A')
+							break;
+					}
+					str = str.Substring(4 + stAn);
+				}
+
+				// 終端を圧縮
+				{
+					for (edAn = 0; edAn < 9; edAn++)
+					{
+						int i = str.Length - 1 - edAn;
+
+						if (i < 0 || str[i] != 'A')
+							break;
+					}
+					str = str.Substring(0, str.Length - edAn);
+				}
+
+				return stAn + str + edAn;
 			}
 
-			private string Decode(string encodedString)
+			private string DecodeGzB64(string str)
 			{
-				return Encoding.UTF8.GetString(SCommon.Base64.I.Decode(encodedString));
+				return
+					(str[0] == '0' ? "" : "H4sI") +
+					new string('A', str[0] - '0') +
+					str.Substring(1, str.Length - 2) +
+					new string('A', str[str.Length - 1] - '0');
 			}
 		}
 
