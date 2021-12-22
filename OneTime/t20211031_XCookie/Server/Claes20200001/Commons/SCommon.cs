@@ -212,7 +212,7 @@ namespace Charlotte.Commons
 			/// 文字列のリストを連結してシリアライズします。
 			/// シリアライズされた文字列：
 			/// -- 空文字列ではない。
-			/// -- 書式 == ^[0-9][A-Za-z0-9+/]*[0-9]$
+			/// -- 書式 == ^[0-9][-_A-Za-z0-9]*[0-9]$
 			/// </summary>
 			/// <param name="plainStrings">任意の文字列のリスト</param>
 			/// <returns>シリアライズされた文字列</returns>
@@ -224,9 +224,9 @@ namespace Charlotte.Commons
 					)
 					throw new ArgumentException();
 
-				return EncodeGzB64(SCommon.Base64.I.Encode(SCommon.Compress(
+				return EncodeGzB64(SCommon.Base64.I.EncodeURL(SCommon.Compress(
 					SCommon.SplittableJoin(plainStrings.Select(plainString => Encoding.UTF8.GetBytes(plainString)).ToArray())
-					)).Replace("=", ""));
+					)));
 			}
 
 			/// <summary>
@@ -247,7 +247,7 @@ namespace Charlotte.Commons
 					.ToArray();
 			}
 
-			private Regex RegexSerializedString = new Regex("^[0-9][A-Za-z0-9+/]*[0-9]$");
+			private Regex RegexSerializedString = new Regex("^[0-9][-_A-Za-z0-9]*[0-9]$");
 
 			private string EncodeGzB64(string str)
 			{
