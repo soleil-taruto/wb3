@@ -1565,6 +1565,21 @@ namespace Charlotte.Commons
 			}
 
 			/// <summary>
+			/// バイト列をBase64に変換します。
+			/// 出力フォーマット：
+			/// -- Base64 URL Encode
+			/// </summary>
+			/// <param name="src">バイト列</param>
+			/// <returns>Base64</returns>
+			public string EncodeURL(byte[] src)
+			{
+				return Encode(src)
+					.Replace("=", "")
+					.Replace('+', '-')
+					.Replace('/', '_');
+			}
+
+			/// <summary>
 			/// Base64を元のバイト列に変換します。
 			/// 対応フォーマット：
 			/// -- Base64 Encode -- 但し改行を含まないこと。パディング無しでも良い。
